@@ -76,3 +76,8 @@ skillswap-hub/
 
 ## License
 MIT 
+![Screenshot 2025-07-05 235110](https://github.com/user-attachments/assets/a77f8b63-5910-4662-9257-6db16d8b90f6)
+![Screenshot 2025-07-05 235045](https://github.com/user-attachments/assets/ec0cbc7d-69b5-4717-8697-eaa051eddf68)
+![Screenshot 2025-07-05 235018](https://github.com/user-attachments/assets/e20133c2-f614-453a-bc3d-b9548b13c3c9)
+![Screenshot 2025-07-05 235000](https://github.com/user-attachments/assets/a7b184ea-89e7-4489-a266-830239f02860)
+![Screenshot 2025-07-05 234945](https://github.com/user-attachments/assets/2f0ffdec-1b55-49b0-9144-a159dda1836c)
