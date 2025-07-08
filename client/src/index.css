@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%);
+  background-attachment: fixed;
+  animation: gradientMove 10s ease-in-out infinite alternate;
+  transition: background 0.5s, color 0.5s;
+}
+
+html.dark body {
+  background: linear-gradient(135deg, #18181b 0%, #1e293b 100%);
+  color: #e0e7ef;
+}
+
+html.dark .bg-white {
+  background-color: #23272f !important;
+}
+html.dark .text-gray-900 {
+  color: #e0e7ef !important;
+}
+html.dark .shadow-lg, html.dark .shadow-md {
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.7) !important;
+}
+html.dark .border-blue-100 {
+  border-color: #334155 !important;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes bell-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-10deg); }
+  40% { transform: rotate(8deg); }
+  60% { transform: rotate(-6deg); }
+  80% { transform: rotate(4deg); }
+}
+.animate-bell-wiggle {
+  animation: bell-wiggle 0.7s;
+}
+
+@keyframes skillBar {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-skillBar {
+  animation: skillBar 0.4s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+@keyframes likePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3) rotate(-10deg); }
+  70% { transform: scale(0.95) rotate(5deg); }
+  100% { transform: scale(1); }
+}
+.animate-likePop {
+  animation: likePop 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounceDot 1s infinite both;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounceDot {
+  0%, 80%, 100% { transform: scale(1); opacity: 0.7; }
+  40% { transform: scale(1.5); opacity: 1; }
+} 
