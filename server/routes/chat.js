@@ -5,6 +5,8 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
+const DEFAULT_LIMIT = 50;
+
 // Get all chats for a user
 router.get('/', auth, async (req, res) => {
   try {
@@ -20,10 +22,13 @@ router.get('/', auth, async (req, res) => {
 // Get a specific chat
 router.get('/:chatId', auth, async (req, res) => {
   try {
+    const { limit = DEFAULT_LIMIT, skip = 0 } = req.query;
+
     const chat = await Chat.findById(req.params.chatId)
       .populate('participants', 'name email profilePicture')
-      .populate('messages.sender', 'name email profilePicture');
-    
+      .populate('messages.sender', 'name email profilePicture')
+      .lean();
+
     if (!chat) {
       return res.status(404).json({ message: 'Chat not found' });
     }
@@ -32,6 +37,12 @@ router.get('/:chatId', auth, async (req, res) => {
     if (!chat.participants.some(p => p._id.toString() === req.user._id.toString())) {
       return res.status(403).json({ message: 'Not authorized to access this chat' });
     }
+
+    // Paginate messages (from the end)
+    const totalMessages = chat.messages.length;
+    const start = Math.max(0, totalMessages - Number(skip) - Number(limit));
+    const end = totalMessages - Number(skip);
+    chat.messages = chat.messages.slice(start, end);
 
     res.json(chat);
   } catch (error) {

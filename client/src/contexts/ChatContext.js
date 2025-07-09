@@ -74,7 +74,7 @@ export const ChatProvider = ({ children, addNotification }) => {
         newSocket.disconnect();
       };
     }
-  }, [user]);
+  }, [user, addNotification]);
 
   const loadChats = async () => {
     try {

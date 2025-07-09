@@ -2,8 +2,13 @@ import Groq from 'groq-sdk';
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Require the Groq API key to be set in the environment
+if (!process.env.GROQ_API_KEY) {
+  throw new Error('GROQ_API_KEY environment variable is not set. Please set it in your .env file.');
+}
+
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY || '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',
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 /**

@@ -2,27 +2,63 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { format } from 'date-fns';
-import Toast from '../Toast';
+
+const MESSAGES_LIMIT = 50;
 
 const ChatWindow = () => {
-  const { activeChat, sendMessage, joinChat, setTyping, typingUsers } = useChat();
+  const { activeChat, sendMessage, joinChat, typingUsers } = useChat();
   const { user } = useAuth();
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [skip, setSkip] = useState(0);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [toast, setToast] = useState('');
-  const [toastType, setToastType] = useState('success');
+
+  const otherParticipant = activeChat && user ? activeChat.participants.find(p => p._id !== user._id) : null;
+
+  // Fetch messages with pagination
+  const fetchMessages = async (newSkip = 0, append = false) => {
+    if (!activeChat) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:3002'}/api/chat/${activeChat._id}?limit=${MESSAGES_LIMIT}&skip=${newSkip}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      const data = await res.json();
+      if (data && data.messages) {
+        setHasMore((data.messages.length === MESSAGES_LIMIT) && (newSkip + MESSAGES_LIMIT < (activeChat.messages?.length || 10000)));
+        if (append) {
+          setMessages(prev => [...data.messages, ...prev]);
+        } else {
+          setMessages(data.messages);
+        }
+      }
+    } catch (err) {
+      // Optionally show error
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (activeChat) {
       joinChat(activeChat._id);
+      setSkip(0);
+      fetchMessages(0, false);
     }
+    // eslint-disable-next-line
   }, [activeChat, joinChat]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [activeChat?.messages]);
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,15 +69,11 @@ const ChatWindow = () => {
     if (message.trim()) {
       try {
         sendMessage(activeChat._id, message);
-        setToastType('success');
-        setToast('Message sent!');
-        setTimeout(() => setToast(''), 1500);
+        setMessage('');
+        // Optionally, refetch or optimistically update messages
       } catch (err) {
-        setToastType('error');
-        setToast('Failed to send message');
-        setTimeout(() => setToast(''), 2000);
+        // Optionally show error
       }
-      setMessage('');
     }
   };
 
@@ -49,10 +81,16 @@ const ChatWindow = () => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    setTyping(activeChat._id);
+    // setTyping(activeChat._id); // If you want to show typing
     typingTimeoutRef.current = setTimeout(() => {
       // Typing status will be cleared by the server after 3 seconds
     }, 3000);
+  };
+
+  const handleLoadMore = () => {
+    const newSkip = skip + MESSAGES_LIMIT;
+    setSkip(newSkip);
+    fetchMessages(newSkip, true);
   };
 
   if (!activeChat) {
@@ -63,17 +101,17 @@ const ChatWindow = () => {
     );
   }
 
-  if (!activeChat.messages || activeChat.messages.length === 0) {
+  if (!messages || messages.length === 0) {
     return (
       <div className="flex flex-col h-full bg-white rounded-lg shadow-md">
         <div className="p-4 border-b flex items-center space-x-3">
           <img
-            src={otherParticipant.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherParticipant.name || 'User')}&background=random&size=64`}
-            alt={otherParticipant.name}
+            src={otherParticipant?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherParticipant?.name || 'User')}&background=random&size=64`}
+            alt={otherParticipant?.name}
             className="w-10 h-10 rounded-full object-cover"
           />
           <div>
-            <h3 className="font-medium text-gray-900">{otherParticipant.name}</h3>
+            <h3 className="font-medium text-gray-900">{otherParticipant?.name}</h3>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-4 animate-pulse">
@@ -87,20 +125,18 @@ const ChatWindow = () => {
     );
   }
 
-  const otherParticipant = activeChat.participants.find(p => p._id !== user._id);
-
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-md">
       {/* Chat Header */}
       <div className="p-4 border-b flex items-center space-x-3">
         <img
-          src={otherParticipant.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherParticipant.name || 'User')}&background=random&size=64`}
-          alt={otherParticipant.name}
+          src={otherParticipant?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherParticipant?.name || 'User')}&background=random&size=64`}
+          alt={otherParticipant?.name}
           className="w-10 h-10 rounded-full object-cover"
         />
         <div>
-          <h3 className="font-medium text-gray-900">{otherParticipant.name}</h3>
-          {typingUsers[activeChat._id] === otherParticipant._id && (
+          <h3 className="font-medium text-gray-900">{otherParticipant?.name}</h3>
+          {typingUsers[activeChat._id] === otherParticipant?._id && (
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm text-gray-500">typing</span>
               <span className="flex space-x-1">
@@ -115,9 +151,18 @@ const ChatWindow = () => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {activeChat.messages.map((msg, index) => (
+        {hasMore && (
+          <button
+            className="mb-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+            onClick={handleLoadMore}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'Load more'}
+          </button>
+        )}
+        {messages.map((msg, index) => (
           <div
-            key={index}
+            key={msg._id || index}
             className={`flex ${
               msg.sender._id === user._id ? 'justify-end' : 'justify-start'
             } animate-fadeIn`}

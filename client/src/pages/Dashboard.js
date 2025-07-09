@@ -10,10 +10,7 @@ const Dashboard = ({ addNotification }) => {
   const [likedMatches, setLikedMatches] = useState({});
   const prevMatchesRef = React.useRef([]);
 
-  useEffect(() => {
-    fetchMatches();
-  }, []);
-
+  // Move fetchMatches definition above useEffect
   const fetchMatches = async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/matches`, {
@@ -47,6 +44,10 @@ const Dashboard = ({ addNotification }) => {
     }
   };
 
+  useEffect(() => {
+    fetchMatches();
+  }, [fetchMatches]);
+
   const handleStartChat = async (matchId) => {
     try {
       await startChat(matchId);
@@ -61,6 +62,7 @@ const Dashboard = ({ addNotification }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const sendMessage = async () => {
       if (!input.trim()) return;
@@ -68,15 +70,18 @@ const Dashboard = ({ addNotification }) => {
       setMessages(newMessages);
       setInput('');
       setLoading(true);
+      setError('');
       try {
         const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3002'}/api/ai/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: newMessages.map(m => m.content) })
         });
+        if (!res.ok) throw new Error('AI backend error');
         const data = await res.json();
         setMessages([...newMessages, { role: 'ai', content: data.reply }]);
       } catch (err) {
+        setError('AI assistant is currently unavailable. Please try again later.');
         setMessages([...newMessages, { role: 'ai', content: 'Sorry, AI is unavailable.' }]);
       }
       setLoading(false);
@@ -102,7 +107,8 @@ const Dashboard = ({ addNotification }) => {
               {messages.map((m, i) => (
                 <div key={i} className={`rounded-lg px-3 py-2 text-sm max-w-[90%] ${m.role === 'user' ? 'bg-blue-100 text-blue-900 self-end ml-auto' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 self-start mr-auto'}`}>{m.content}</div>
               ))}
-              {loading && <div className="text-xs text-gray-400">AI is typing...</div>}
+              {loading && <div className="text-xs text-blue-400">AI is typing... <span className="animate-spin inline-block">⏳</span></div>}
+              {error && <div className="text-xs text-red-500 mt-2">{error}</div>}
             </div>
             <form
               className="flex border-t"

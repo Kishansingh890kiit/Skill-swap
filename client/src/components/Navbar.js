@@ -6,7 +6,6 @@ const Navbar = forwardRef((props, ref) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [unreadCount, setUnreadCount] = useState(3); // Dummy unread notifications
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notifications, setNotifications] = useState([
